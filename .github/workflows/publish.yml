@@ -1,0 +1,45 @@
+name: Publish NPM package
+on:
+  workflow_call:
+    inputs:
+      event_name:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish-snapshots:
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.publish.outputs.url }}
+    name: Publish package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          registry-url: 'https://registry.npmjs.org'
+          node-version: '>=24.7.0' # Trusted publishing requires npm CLI version 11.5.1 or later.
+      - run: npm i
+      - if: ${{ inputs.event_name == 'push' }}
+        run: |
+          PACKAGE_NAME=$(jq --raw-output .name package.json)
+          PREFIX=$(jq --raw-output .version package.json)-snapshot
+          NEXT=$(npm view $PACKAGE_NAME versions --json \
+            | jq --raw-output --arg prefix $PREFIX '[.[] | select(startswith($prefix))|capture("snapshot\\.(?<n>[0-9]+)").n|tonumber]|max + 1 // 0')
+          npm version $PREFIX.$NEXT --no-git-tag-version
+          echo "TAG=snapshot" >> $GITHUB_ENV
+      - if: ${{ inputs.event_name == 'release' }}
+        run: |
+          npm version $(echo ${{ github.release.tag_name }} | sed 's/^v//') --no-git-tag-version
+          echo "TAG=latest" >> $GITHUB_ENV
+      - run: npm test
+      - id: publish
+        run: |
+          npm publish --provenance --access public --tag $TAG
+          echo "url=https://www.npmjs.com/package/$(jq --raw-output .name package.json)/v/$(jq --raw-output .version package.json)" >> "$GITHUB_OUTPUT"
