@@ -45,7 +45,7 @@ jobs:
           echo "TAG=snapshot" >> $GITHUB_ENV
       - if: ${{ inputs.event_name == 'release' }}
         run: |
-          npm version $(echo ${{ inputs.version }} | sed 's/^v//') --no-git-tag-version
+          npm version $(echo ${{ inputs.version }} | sed 's/^v//') --no-git-tag-version --allow-same-version
           echo "TAG=${{ inputs.npm_tag }}" >> $GITHUB_ENV
       - run: npm test
         if: ${{ inputs.test }}
