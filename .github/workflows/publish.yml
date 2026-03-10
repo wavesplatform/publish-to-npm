@@ -8,6 +8,8 @@ on:
       environment:
         required: true
         type: string
+      test:
+        type: boolean
 
 permissions:
   contents: read
@@ -39,6 +41,7 @@ jobs:
           npm version $(echo ${{ github.release.tag_name }} | sed 's/^v//') --no-git-tag-version
           echo "TAG=latest" >> $GITHUB_ENV
       - run: npm test
+        if: ${{ inputs.test }}
       - id: publish
         run: |
           npm publish --provenance --access public --tag $TAG
