@@ -10,7 +10,7 @@ on:
         type: string
       test:
         type: boolean
-      tag_name:
+      version:
         required: false
         type: string
       npm_tag:
@@ -45,11 +45,7 @@ jobs:
           echo "TAG=snapshot" >> $GITHUB_ENV
       - if: ${{ inputs.event_name == 'release' }}
         run: |
-          npm version $(echo ${{ github.event.release.tag_name }} | sed 's/^v//') --no-git-tag-version
-          echo "TAG=latest" >> $GITHUB_ENV
-      - if: ${{ inputs.event_name == 'custom_tag' }}
-        run: |
-          npm version ${{ inputs.tag_name }} --no-git-tag-version
+          npm version $(echo ${{ inputs.version }} | sed 's/^v//') --no-git-tag-version
           echo "TAG=${{ inputs.npm_tag }}" >> $GITHUB_ENV
       - run: npm test
         if: ${{ inputs.test }}
