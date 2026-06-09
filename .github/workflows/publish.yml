@@ -17,20 +17,27 @@ on:
         required: false
         type: string
         default: latest
+      working_directory:
+        required: false
+        type: string
+        default: .
 
 permissions:
   contents: read
   id-token: write
 jobs:
-  publish-snapshots:
+  publish-package:
     environment:
       name: ${{ inputs.environment }}
       url: ${{ steps.publish.outputs.url }}
     name: Publish package
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
         with:
           registry-url: 'https://registry.npmjs.org'
           node-version: '>=24.7.0' # Trusted publishing requires npm CLI version 11.5.1 or later.
