@@ -36,12 +36,21 @@ jobs:
       run:
         working-directory: ${{ inputs.working_directory }}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           registry-url: 'https://registry.npmjs.org'
           node-version: '>=24.7.0' # Trusted publishing requires npm CLI version 11.5.1 or later.
-      - run: npm i
+          package-manager-cache: false # A poisoned cache could reach the OIDC token.
+      # npm ci installs exactly the committed lockfile; repos without one fall back to npm i.
+      - run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm i
+          fi
       - if: ${{ inputs.event_name == 'push' }}
         run: |
           PACKAGE_NAME=$(jq --raw-output .name package.json)
